@@ -54,7 +54,7 @@ class MeshCoreCrypto:
                     raise ValueError("channel requires a hex secret or a #name")
                 if len(secret) not in (16, 32):
                     raise ValueError("channel secret must be 16 or 32 bytes")
-                padded = secret.ljust(32, b"\\x00")
+                padded = secret.ljust(32, b"\x00")
                 channel_hash = hashlib.sha256(secret).digest()[0]
                 self.channels.append((name, channel_hash, padded))
             except Exception as exc:
@@ -64,12 +64,12 @@ class MeshCoreCrypto:
         if seed_hex:
             try:
                 seed = bytes.fromhex(seed_hex)
-                if len(seed) != 32:
-                    raise ValueError("identity_private_seed must be 32-byte hex")
+                if len(seed) not in (32, 64):
+                    raise ValueError("identity_private_seed must be 32- or 64-byte hex")
                 if SigningKey is None:
                     raise RuntimeError("PyNaCl is not installed")
-                self.identity_seed = seed
-                self.identity_public = bytes(SigningKey(seed).verify_key)
+                self.identity_seed = seed[:32]
+                self.identity_public = bytes(SigningKey(self.identity_seed).verify_key)
             except Exception as exc:
                 print("[MeshCore crypto] Identity key unavailable:", repr(exc))
 
@@ -92,7 +92,7 @@ class MeshCoreCrypto:
         try:
             decryptor = Cipher(algorithms.AES(secret[:16]), modes.ECB()).decryptor()
             plain = decryptor.update(ciphertext) + decryptor.finalize()
-            return plain.rstrip(b"\\x00")
+            return plain.rstrip(b"\x00")
         except Exception:
             return None
 
