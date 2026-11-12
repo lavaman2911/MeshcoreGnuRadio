@@ -3,6 +3,7 @@ import os
 import sys
 import struct
 import datetime
+from meshcore_crypto import MeshCoreCrypto
 from gnuradio import gr
 import pmt
 
@@ -158,6 +159,9 @@ class blk(gr.basic_block):
         # Populated from both Advert and CONTROL/DISCOVER_RESP
         # (which leaks the full key completely unencrypted).
         self.known_pubkeys = {}
+
+        # Optional MeshCore channel/identity keys from meshcore_keys.json.
+        self.crypto = MeshCoreCrypto(_script_dir())
 
         # CSV export. self.csv_path is NOT set here - see
         # _ensure_csv_ready() below for why.
@@ -450,7 +454,11 @@ class blk(gr.basic_block):
         print("From (src_hash)   :", self._fmt_hash(src_hash))
         print("Cipher MAC        :", cipher_mac.hex())
         print("Ciphertext length :", len(ciphertext), "bytes")
-        print("(Content is encrypted - cannot be read here)")
+        decoded = self.crypto.decrypt_direct(payload, self.known_pubkeys)
+        if decoded:
+            print("Decrypted message :", decoded)
+        else:
+            print("Message not decrypted (no matching local identity key or peer public key)")
         print("================================")
 
     # ---------------------------------------------------------
@@ -487,7 +495,11 @@ class blk(gr.basic_block):
         print("Channel hash      : %02x" % channel_hash)
         print("Cipher MAC        :", cipher_mac.hex())
         print("Ciphertext length :", len(ciphertext), "bytes")
-        print("(Content is encrypted - cannot be read here)")
+        decoded = self.crypto.decrypt_group(channel_hash, payload[1:], payload_name)
+        if decoded:
+            print("Decrypted message :", decoded)
+        else:
+            print("No matching channel key (add it to meshcore_keys.json)")
 
     # ---------------------------------------------------------
     # Anonymous Request
