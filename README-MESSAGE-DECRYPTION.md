@@ -26,7 +26,7 @@ Add the channel name and its 16- or 32-byte secret as hexadecimal:
 
 ### Direct messages
 
-Set `identity_private_seed` to the 32-byte Ed25519 private seed in hex for the receiving/sending node. The decoder can decrypt a DM only when the packet is addressed to or sent by that identity and the other node's full public key has already been learned from an Advert/Discover response. A passive receiver cannot decrypt DMs for unrelated nodes.
+Set `identity_private_seed` to the Ed25519 private key in hex (32-byte seed or 64-byte expanded private key) for the receiving/sending node. The decoder can decrypt a DM only when the packet is addressed to or sent by that identity and the other node's full public key has already been learned from an Advert/Discover response. A passive receiver cannot decrypt DMs for unrelated nodes.
 
 Keep `meshcore_keys.json` private. Do not commit real channel secrets or private identity keys.
 
